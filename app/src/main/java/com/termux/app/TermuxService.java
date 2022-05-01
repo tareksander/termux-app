@@ -67,7 +67,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
     private static int EXECUTION_ID = 1000;
 
     /** This service is only bound from inside the same process and never uses IPC. */
-    class LocalBinder extends Binder {
+    public class LocalBinder extends Binder {
         public final TermuxService service = TermuxService.this;
     }
 
