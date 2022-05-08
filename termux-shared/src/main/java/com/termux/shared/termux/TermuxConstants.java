@@ -240,7 +240,7 @@ import java.util.List;
  * - 0.41.0 (2022-04-17)
  *      - Added `TERMUX_APP.TERMUX_AM_SOCKET_FILE_PATH`.
  * - 0.42.0 (2022-04-22)
- *      - Added `PERMISSION_TERMUX_PLUGIN` and `PERMISSION_TERMUX_SIGNATURE`.
+ *      - Added `PERMISSION_TERMUX_PLUGIN`, `PERMISSION_TERMUX_SIGNATURE`. `TERMUX_PLUGINS_DIR_PATH` and `TERMUX_PLUGINS_DIR`.
  */
 
 /**
@@ -669,6 +669,11 @@ public final class TermuxConstants {
     public static final String TERMUX_APPS_DIR_PATH = TERMUX_FILES_DIR_PATH + "/apps"; // Default: "/data/data/com.termux/files/apps"
     /** Termux and plugin apps directory */
     public static final File TERMUX_APPS_DIR = new File(TERMUX_APPS_DIR_PATH);
+    
+    /** Termux and plugin apps directory path */
+    public static final String TERMUX_PLUGINS_DIR_PATH = TERMUX_APPS_DIR_PATH + "/plugins"; // Default: "/data/data/com.termux/files/apps/plugins"
+    /** Termux and plugin apps directory */
+    public static final File TERMUX_PLUGINS_DIR = new File(TERMUX_PLUGINS_DIR_PATH);
 
 
 
