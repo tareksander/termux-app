@@ -20,6 +20,7 @@ import androidx.annotation.Nullable;
 
 import com.termux.R;
 import com.termux.app.terminal.TermuxTerminalSessionClient;
+import com.termux.shared.shell.command.runner.nativerunner.NativeShell;
 import com.termux.shared.termux.plugins.TermuxPluginUtils;
 import com.termux.shared.data.IntentUtils;
 import com.termux.shared.net.uri.UriUtils;
@@ -46,6 +47,8 @@ import com.termux.terminal.TerminalEmulator;
 import com.termux.terminal.TerminalSession;
 import com.termux.terminal.TerminalSessionClient;
 
+import java.io.IOException;
+import java.lang.annotation.Native;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,6 +90,11 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
      * The background TermuxTasks which this service manages.
      */
     final List<AppShell> mTermuxTasks = new ArrayList<>();
+    
+    /**
+     * The background TermuxTasks which this service manages.
+     */
+    final List<NativeShell> mTermuxNativeTasks = new ArrayList<>();
 
     /**
      * The pending plugin ExecutionCommands that have yet to be processed by this service.
@@ -280,6 +288,11 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
             if (executionCommand.isPluginExecutionCommandWithPendingResult())
                 termuxTasks.get(i).killIfExecuting(this, true);
         }
+    
+        List<NativeShell> termuxNativeTasks = new ArrayList<>(mTermuxNativeTasks);
+        for (int i = 0; i < termuxNativeTasks.size(); i++) {
+            termuxNativeTasks.get(i).kill();
+        }
 
         List<ExecutionCommand> pendingPluginExecutionCommands = new ArrayList<>(mPendingPluginExecutionCommands);
         for (int i = 0; i < pendingPluginExecutionCommands.size(); i++) {
@@ -414,8 +427,22 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
             TermuxPluginUtils.processPluginExecutionCommandError(this, LOG_TAG, executionCommand, false);
         }
     }
-
-
+    
+    /**
+     * Executes a NativeShell as a TermuxTask.
+     */
+    public NativeShell executeNativeShell(ExecutionCommand executionCommand, String[] environment, NativeShell.Client client) {
+        final NativeShell[] shell = new NativeShell[1];
+        shell[0] = new NativeShell(executionCommand, (exitCode, error) -> {
+            mHandler.post(() -> {
+                mTermuxNativeTasks.remove(shell[0]);
+                updateNotification();
+            });
+            client.terminated(exitCode, error);
+        }, environment);
+        shell[0].execute();
+        return shell[0];
+    }
 
 
 
@@ -751,7 +778,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
 
         // Set notification text
         int sessionCount = getTermuxSessionsSize();
-        int taskCount = mTermuxTasks.size();
+        int taskCount = mTermuxTasks.size() + mTermuxNativeTasks.size();
         String notificationText = sessionCount + " session" + (sessionCount == 1 ? "" : "s");
         if (taskCount > 0) {
             notificationText += ", " + taskCount + " task" + (taskCount == 1 ? "" : "s");
